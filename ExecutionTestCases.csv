@@ -1,0 +1,13 @@
+TestCase,Build,FirstNumber,SecondNumber,Operation,IntegersOnly,Browser,ExpectedValue
+1,Prototype,123,123,A,F,Chrome,246
+2,Prototype,123,123,A,F,Firefox,246
+3,1,123,123,S,F,Chrome,0
+4,1,123,123,S,F,Firefox,0
+5,2,123,123,M,F,Chrome,15129
+6,2,123,123,M,F,Firefox,15129
+7,3,123,123,D,F,Chrome,1
+8,3,123,123,D,F,Firefox,1
+9,4,123,123,C,F,Chrome,123123
+10,4,123,123,C,F,Firefox,123123
+11,5,12345,12345,C,F,Chrome,1234512345
+12,5,12345,12345,C,F,Firefox,1234512345

@@ -1,0 +1,18 @@
+{
+  "name": "selenium",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "csv-parser": "^3.0.0",
+    "fs": "0.0.1-security",
+    "selenium-webdriver": "^4.0.0-alpha.8",
+    "util": "^0.12.3"
+  }
+}
