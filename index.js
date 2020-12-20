@@ -1,41 +1,146 @@
 const webdrive = require('selenium-webdriver');
+var driver;
 const data = [];
+const builds = [];
+const operations = [];
+const firefox = require('selenium-webdriver/firefox');
+
+function chooseBrowser(browser) {
+	const nomalizeBrowser = browser.toLowerCase();
+	switch (nomalizeBrowser) {
+		case 'chrome':
+			driver = new webdrive.Builder().forBrowser('chrome').build();
+			break;
+		case 'firefox':
+			var options = new firefox.Options();
+			options.addArguments("-headless");
+
+			driver = new webdrive.Builder()
+				.forBrowser('firefox')
+				.setFirefoxOptions(options)
+				.build();
+			break;
+	}
+}
+
+function fieldBuild(build) {
+	var id;
+	const nomalizeBuild = build.toLowerCase();
+	switch (nomalizeBuild) {
+		case 'prototype':
+			id = 0;
+			break;
+		case '1':
+			id = 1;
+			break;
+		case '2':
+			id = 2;
+			break;
+		case '3':
+			id = 3;
+			break;
+		case '4':
+			id = 4;
+			break;
+		case '5':
+			id = 5;
+			break;
+		case '6':
+			id = 6;
+			break;
+		case '7':
+			id = 7;
+			break;
+		case '8':
+			id = 8;
+			break;
+		case '9':
+			id = 9;
+			break;
+	}
+	driver.findElement(webdrive.By.css(builds[id])).click();
+}
+
+function fieldNumberFirst(firstNumber) {
+	const inputFieldNumberFirst = driver.findElement(webdrive.By.id('number1Field'));
+	inputFieldNumberFirst.sendKeys(firstNumber.toString());
+}
+
+function fieldNumberSecond(secondNumber) {
+	const inputFieldNumberSecond = driver.findElement(webdrive.By.id('number2Field'));
+	inputFieldNumberSecond.sendKeys(secondNumber.toString());
+}
+
+function fieldOpertion(operation) {
+	var id;
+	const nomalizeOperation = operation.toUpperCase();
+	switch (nomalizeOperation) {
+		case 'A':
+			id = 0;
+			break;
+		case 'S':
+			id = 1;
+			break;
+		case 'M':
+			id = 2;
+			break;
+		case 'D':
+			id
+		case 'C':
+			id = 4;
+			break;
+	}
+	driver.findElement(webdrive.By.css(operations[id])).click();
+}
+
+function buttonCalculate() {
+	driver.findElement(webdrive.By.id('calculateButton')).click();
+}
+
+async function fieldAnswer(expectedValue) {
+	const nomalizeExpectedValue = expectedValue.toString().toLowerCase();
+	const result = await driver.findElement(webdrive.By.id('numberAnswerField')).getAttribute("value");
+	const nomalizeResult = result.toString().toLowerCase();
+	console.log(nomalizeResult);
+
+}
+
+function checkboxIntegersOnly(integersOnly) {
+	const nomalizeIntegresOnly = integersOnly.toString().toUpperCase();
+	switch (nomalizeIntegresOnly) {
+		case 'F':
+			break;
+		case 'T':
+			driver.findElement(webdrive.By.id('integerSelect')).click();
+			break;
+	}
+}
 
 function process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue) {
-
-	console.log(id + build + firstNumber + secondNumber + operation + integersOnly + browser + expectedValue);
+	// console.log(id + " " + build + " " + firstNumber + " " + secondNumber + " " + operation + " " + integersOnly + " " + browser + " " + expectedValue + " ");
 	// Open Browser
-	const driver = new webdrive.Builder().forBrowser('chrome').build();
+	chooseBrowser(browser);
 
 	// Go to Website to test
 	driver.get('https://testsheepnz.github.io/BasicCalculator.html').then(async () => {
+		// Automation select: choose one of builds
+		fieldBuild(build);
 
 		// Automation type: Input Field Number First
-		const inputFieldNumberFirst = driver.findElement(webdrive.By.id('number1Field'));
-		inputFieldNumberFirst.sendKeys("2138");
+		fieldNumberFirst(firstNumber);
 
 		// Automation type: Input Field Number First
-		const inputFieldNumberSecond = driver.findElement(webdrive.By.id('number2Field'));
-		inputFieldNumberSecond.sendKeys("12398");
+		fieldNumberSecond(secondNumber);
 
-		// Autiomation select Operations: Add, Subtract, Multiply, Divide, Concatenate 
-		const operations = [];
-		// Add
-		operations.push("#selectOperationDropdown > option:nth-child(1)");
-		// Substract
-		operations.push("#selectOperationDropdown > option:nth-child(2)");
-		// Multiply
-		operations.push("#selectOperationDropdown > option:nth-child(3)");
-		// Divide
-		operations.push("#selectOperationDropdown > option:nth-child(4)");
-		// Concatenate
-		operations.push("#selectOperationDropdown > option:nth-child(5)");
-		// Select one of them
-		driver.findElement(webdrive.By.css(operations[4])).click();
+		// Automation select: choose one of operations
+		fieldOpertion(operation);
+
+		// Automation checkbox integers only:
+		checkboxIntegersOnly(integersOnly);
 
 		// Automation click to calculate
-		driver.findElement(webdrive.By.id('calculateButton')).click();
-
+		buttonCalculate();
+		fieldAnswer(expectedValue);
 	}).catch((e) => {
 		console.log(e);
 	});
@@ -65,7 +170,9 @@ function preprocessing(row) {
 function processing() {
 	data.map((row) => {
 		const { id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue } = preprocessing(row);
-		process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue);
+		if (id == 6) {
+			process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue);
+		}
 	});
 }
 
@@ -79,7 +186,44 @@ async function readFileCsv() {
 	}
 }
 
+function init() {
+	// Autiomation select Operations: Add, Subtract, Multiply, Divide, Concatenate.
+	// Add
+	operations.push("#selectOperationDropdown > option:nth-child(1)");
+	// Substract
+	operations.push("#selectOperationDropdown > option:nth-child(2)");
+	// Multiply
+	operations.push("#selectOperationDropdown > option:nth-child(3)");
+	// Divide
+	operations.push("#selectOperationDropdown > option:nth-child(4)");
+	// Concatenate
+	operations.push("#selectOperationDropdown > option:nth-child(5)");
+
+	// Autiomation select builds: prototype, 1, 2, 3, 4, 5, 6, 7, 8, 9.
+	// build: prototype
+	builds.push("#selectBuild > option:nth-child(1)");
+	// build: 1
+	builds.push("#selectBuild > option:nth-child(2)");
+	// build: 2
+	builds.push("#selectBuild > option:nth-child(3)");
+	// build: 3
+	builds.push("#selectBuild > option:nth-child(4)");
+	// build: 4
+	builds.push("#selectBuild > option:nth-child(5)");
+	// build: 5
+	builds.push("#selectBuild > option:nth-child(6)");
+	// build: 6
+	builds.push("#selectBuild > option:nth-child(7)");
+	// build: 7
+	builds.push("#selectBuild > option:nth-child(8)");
+	// build: 8
+	builds.push("#selectBuild > option:nth-child(9)");
+	// build: 9
+	builds.push("#selectBuild > option:nth-child(10)");
+}
+
 async function main() {
+	init();
 	await readFileCsv();
 	processing();
 }
