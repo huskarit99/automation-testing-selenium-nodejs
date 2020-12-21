@@ -130,7 +130,7 @@ function checkboxIntegersOnly(integersOnly) {
 	}
 }
 
-function process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue) {
+async function process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue) {
 	// console.log(id + " " + build + " " + firstNumber + " " + secondNumber + " " + operation + " " + integersOnly + " " + browser + " " + expectedValue + " ");
 	// Open Browser
 	chooseBrowser(browser);
@@ -154,7 +154,7 @@ function process(id, build, firstNumber, secondNumber, operation, integersOnly, 
 
 		// Automation click to calculate
 		buttonCalculate();
-		fieldAnswer(expectedValue);
+		await fieldAnswer(expectedValue);
 	}).catch((e) => {
 		console.log(e);
 	});
@@ -181,11 +181,13 @@ function preprocessing(row) {
 	};
 }
 
-function processing() {
-	data.map((row) => {
-		const { id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue } = preprocessing(row);
-		console.log("Processing testcase " + id.toString() + ": " + id.toString() + "/" + data.length.toString());
-		process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue);
+async function processing() {
+	return Promise((res, rej) => {
+		data.map(async (row) => {
+			const { id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue } = preprocessing(row);
+			console.log("Processing testcase " + id.toString() + ": " + id.toString() + "/" + data.length.toString());
+			await process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue);
+		});
 	});
 }
 
@@ -252,7 +254,7 @@ async function main() {
 	await readFileCsv();
 	console.log("Reading data successfully !!!");
 	console.log("We have " + data.length.toString() + " testcases");
-	processing();
+	await processing();
 	console.log("Processing testcases successfully !!!");
 	console.log("Writing data result in file result.csv");
 	console.log("Waiting ...");
