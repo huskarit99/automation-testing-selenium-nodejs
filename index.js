@@ -1,265 +1,253 @@
 const fs = require('fs');
 const fastcsv = require('fast-csv');
-const webdrive = require('selenium-webdriver');
-const chrome = require('selenium-webdriver/chrome');
-const firefox = require('selenium-webdriver/firefox');
+const puppeteerChrome = require('puppeteer');
+const puppeteerFirefox = require('puppeteer-firefox');
 
-
+var page;
 var driver;
+var result;
+var error;
 const data = [];
-const builds = [];
 var data_result = [];
-const operations = [];
 
+const FIREFOX = 'firefox';
+const CHROME = 'chrome';
 
 function chooseBrowser(browser) {
-	const nomalizeBrowser = browser.toLowerCase();
-	var options;
-	switch (nomalizeBrowser) {
-		case 'chrome':
-			options = new chrome.Options().headless();
-			driver = new webdrive.Builder()
-				.forBrowser('chrome')
-				.setChromeOptions(options)
-				.build();
-			break;
-		case 'firefox':
-			options = new firefox.Options();
-			options.addArguments("-headless");
-
-			driver = new webdrive.Builder()
-				.forBrowser('firefox')
-				.setFirefoxOptions(options)
-				.build();
-			break;
-	}
+  const nomalizeBrowser = browser.toLowerCase();
+  switch (nomalizeBrowser) {
+    case 'chrome':
+      return puppeteerChrome.launch({
+        "headless": true,
+        "args": ['--no-sandbox']
+      })
+      break;
+    case 'firefox':
+      return puppeteerFirefox.launch({
+        "headless": true,
+        "args": ['--no-sandbox']
+      })
+      break;
+  }
 }
 
 function fieldBuild(build) {
-	var id;
-	const nomalizeBuild = build.toLowerCase();
-	switch (nomalizeBuild) {
-		case 'prototype':
-			id = 0;
-			break;
-		case '1':
-			id = 1;
-			break;
-		case '2':
-			id = 2;
-			break;
-		case '3':
-			id = 3;
-			break;
-		case '4':
-			id = 4;
-			break;
-		case '5':
-			id = 5;
-			break;
-		case '6':
-			id = 6;
-			break;
-		case '7':
-			id = 7;
-			break;
-		case '8':
-			id = 8;
-			break;
-		case '9':
-			id = 9;
-			break;
-	}
-	driver.findElement(webdrive.By.css(builds[id])).click();
+  var item;
+  const nomalizeBuild = build.toLowerCase();
+  switch (nomalizeBuild) {
+    case 'prototype':
+      item = 0;
+      break;
+    case '1':
+      item = 1;
+      break;
+    case '2':
+      item = 2;
+      break;
+    case '3':
+      item = 3;
+      break;
+    case '4':
+      item = 4;
+      break;
+    case '5':
+      item = 5;
+      break;
+    case '6':
+      item = 6;
+      break;
+    case '7':
+      item = 7;
+      break;
+    case '8':
+      item = 8;
+      break;
+    case '9':
+      item = 9;
+      break;
+  }
+  const id = "select#" + "selectBuild";
+  return page.select(id, item.toString());
 }
 
 function fieldNumberFirst(firstNumber) {
-	const inputFieldNumberFirst = driver.findElement(webdrive.By.id('number1Field'));
-	inputFieldNumberFirst.sendKeys(firstNumber.toString());
+  const value = firstNumber;
+  return page.evaluate((value) => {
+    document.querySelector('#number1Field').value = value;
+  }, value);
 }
 
 function fieldNumberSecond(secondNumber) {
-	const inputFieldNumberSecond = driver.findElement(webdrive.By.id('number2Field'));
-	inputFieldNumberSecond.sendKeys(secondNumber.toString());
+  const value = secondNumber;
+  return page.evaluate((value) => {
+    document.querySelector('#number2Field').value = value;
+  }, value);
 }
 
 function fieldOpertion(operation) {
-	var id;
-	const nomalizeOperation = operation.toUpperCase();
-	switch (nomalizeOperation) {
-		case 'A':
-			id = 0;
-			break;
-		case 'S':
-			id = 1;
-			break;
-		case 'M':
-			id = 2;
-			break;
-		case 'D':
-			id
-		case 'C':
-			id = 4;
-			break;
-	}
-	driver.findElement(webdrive.By.css(operations[id])).click();
+  var item;
+  const nomalizeOperation = operation.toUpperCase();
+  switch (nomalizeOperation) {
+    case 'A':
+      item = '0';
+      break;
+    case 'S':
+      item = '1';
+      break;
+    case 'M':
+      item = '2';
+      break;
+    case 'D':
+      item = '3';
+      break;
+    case 'C':
+      item = '4';
+      break;
+  }
+  const id = "select#" + "selectOperationDropdown";
+  return page.select(id, item);
 }
 
 function buttonCalculate() {
-	driver.findElement(webdrive.By.id('calculateButton')).click();
+  return page.$eval('input#calculateButton', button => button.click());
 }
 
-async function fieldAnswer(expectedValue) {
-	const nomalizeExpectedValue = expectedValue.toString().toLowerCase();
-	const result = await driver.findElement(webdrive.By.id('numberAnswerField')).getAttribute("value");
-	const nomalizeResult = result.toString().toLowerCase();
-	data_result.push({
-		'result_from_calculator': nomalizeResult,
-		'expected_result': nomalizeExpectedValue
-	});
+async function fieldErrorMsg() {
+  const element = await page.$("#errorMsgField");
+  return page.evaluate(element => element.innerHTML, element);
+}
+
+function buttonClear() {
+  const value = "";
+  return page.evaluate((value) => {
+    document.querySelector('#numberAnswerField').value = value;
+  }, value);
+
+}
+
+async function fieldAnswer() {
+  const element = await page.$("#numberAnswerField");
+  return page.evaluate(element => element.value, element);
 }
 
 function checkboxIntegersOnly(integersOnly) {
-	const nomalizeIntegresOnly = integersOnly.toString().toUpperCase();
-	switch (nomalizeIntegresOnly) {
-		case 'F':
-			break;
-		case 'T':
-			driver.findElement(webdrive.By.id('integerSelect')).click();
-			break;
-	}
+  const nomalizeIntegresOnly = integersOnly.toString().toUpperCase();
+  switch (nomalizeIntegresOnly) {
+    case 'F':
+      break;
+    case 'T':
+      return page.$eval("#integerSelect", el => { el.checked = true });
+      break;
+  }
 }
 
-async function process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue) {
-	// console.log(id + " " + build + " " + firstNumber + " " + secondNumber + " " + operation + " " + integersOnly + " " + browser + " " + expectedValue + " ");
-	// Open Browser
-	chooseBrowser(browser);
-
-	// Go to Website to test
-	driver.get('https://testsheepnz.github.io/BasicCalculator.html').then(async () => {
-		// Automation select: choose one of builds
-		fieldBuild(build);
-
-		// Automation type: Input Field Number First
-		fieldNumberFirst(firstNumber);
-
-		// Automation type: Input Field Number First
-		fieldNumberSecond(secondNumber);
-
-		// Automation select: choose one of operations
-		fieldOpertion(operation);
-
-		// Automation checkbox integers only:
-		checkboxIntegersOnly(integersOnly);
-
-		// Automation click to calculate
-		buttonCalculate();
-		await fieldAnswer(expectedValue);
-	}).catch((e) => {
-		console.log(e);
-	});
+function testData(build, firstNumber, secondNumber, operation, integersOnly) {
+  return new Promise(async (res, rej) => {
+    await fieldBuild(build);
+    await fieldNumberFirst(firstNumber);
+    await fieldNumberSecond(secondNumber);
+    await fieldOpertion(operation);
+    await buttonCalculate();
+    await checkboxIntegersOnly(integersOnly);
+    error = await fieldErrorMsg();
+    result = await fieldAnswer();
+    // button clear //
+    await page.$eval("#integerSelect", el => { el.checked = false });
+    await buttonClear();
+    //
+    res("done");
+  });
 }
 
-function preprocessing(row) {
-	const id = row['TestCase'],
-		build = row['Build'],
-		firstNumber = row['FirstNumber'],
-		secondNumber = row['SecondNumber'],
-		operation = row['Operation'],
-		integersOnly = row['IntegersOnly'],
-		browser = row['Browser'],
-		expectedValue = row['ExpectedValue'];
-	return {
-		id,
-		build,
-		firstNumber,
-		secondNumber,
-		operation,
-		integersOnly,
-		browser,
-		expectedValue
-	};
+function nomalizeNameVariables(row) {
+  const build = row['Build'],
+    firstNumber = row['FirstNumber'],
+    secondNumber = row['SecondNumber'],
+    operation = row['Operation'],
+    integersOnly = row['IntegersOnly'];
+  return {
+    build,
+    firstNumber,
+    secondNumber,
+    operation,
+    integersOnly
+  };
 }
 
-async function processing() {
-	return Promise((res, rej) => {
-		data.map(async (row) => {
-			const { id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue } = preprocessing(row);
-			console.log("Processing testcase " + id.toString() + ": " + id.toString() + "/" + data.length.toString());
-			await process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue);
-		});
-	});
+function processing() {
+  var id = 0;
+  return new Promise(async (res, rej) => {
+    driver = await chooseBrowser(CHROME);
+    page = await driver.newPage();
+    await page.goto("https://testsheepnz.github.io/BasicCalculator.html");
+
+    for (var row of data) {
+      id += 1;
+      const { build, firstNumber, secondNumber, operation, integersOnly } = nomalizeNameVariables(row);
+      console.log("Processing testcase " + id.toString() + ": " + id.toString() + "/" + data.length.toString());
+
+      await testData(build, firstNumber, secondNumber, operation, integersOnly);
+      const nomalizeResult = await result.toString().toLowerCase();
+      const errorExpected = error;
+
+
+      await testData('prototype', firstNumber, secondNumber, operation, integersOnly);
+      const nomalizeExpectedValue = await result.toString().toLowerCase();
+      const errorBuild = error;
+
+      var resultTest = "FAIL";
+      if (errorExpected === errorBuild && nomalizeExpectedValue === nomalizeResult) {
+        resultTest = "PASS";
+      }
+
+      // console.log(nomalizeExpectedValue + "  " + nomalizeResult + " " + error);
+      data_result.push({
+        'result_from_calculator': nomalizeResult,
+        'expected_result': nomalizeExpectedValue,
+        'error': error,
+        'result_test': resultTest
+      });
+    };
+    await page.close();
+    await driver.close();
+    res("done");
+  });
 }
 
 async function readFileCsv() {
-	const csv = require('csv-parser');
-	const fs = require('fs');
+  const csv = require('csv-parser');
+  const fs = require('fs');
 
-	const readStream = fs.createReadStream('./ExecutionTestCases.csv').pipe(csv());
-	for await (const row of readStream) {
-		data.push(row);
-	}
-}
+  const readStream = fs.createReadStream('./ExecutionTestCases.csv').pipe(csv());
+  for await (const row of readStream) {
+    data.push(row);
+  }
 
-function init() {
-	// Autiomation select Operations: Add, Subtract, Multiply, Divide, Concatenate.
-	// Add
-	operations.push("#selectOperationDropdown > option:nth-child(1)");
-	// Substract
-	operations.push("#selectOperationDropdown > option:nth-child(2)");
-	// Multiply
-	operations.push("#selectOperationDropdown > option:nth-child(3)");
-	// Divide
-	operations.push("#selectOperationDropdown > option:nth-child(4)");
-	// Concatenate
-	operations.push("#selectOperationDropdown > option:nth-child(5)");
-
-	// Autiomation select builds: prototype, 1, 2, 3, 4, 5, 6, 7, 8, 9.
-	// build: prototype
-	builds.push("#selectBuild > option:nth-child(1)");
-	// build: 1
-	builds.push("#selectBuild > option:nth-child(2)");
-	// build: 2
-	builds.push("#selectBuild > option:nth-child(3)");
-	// build: 3
-	builds.push("#selectBuild > option:nth-child(4)");
-	// build: 4
-	builds.push("#selectBuild > option:nth-child(5)");
-	// build: 5
-	builds.push("#selectBuild > option:nth-child(6)");
-	// build: 6
-	builds.push("#selectBuild > option:nth-child(7)");
-	// build: 7
-	builds.push("#selectBuild > option:nth-child(8)");
-	// build: 8
-	builds.push("#selectBuild > option:nth-child(9)");
-	// build: 9
-	builds.push("#selectBuild > option:nth-child(10)");
 }
 
 function writeFileCsv() {
-	const ws = fs.createWriteStream("result.csv");
-	return new Promise((res, rej) => {
-		fastcsv
-			.write(data_result, { headers: true })
-			.pipe(ws);
-	});
+  return new Promise((res, rej) => {
+    const ws = fs.createWriteStream("result.csv");
+    fastcsv
+      .write(data_result, { headers: true })
+      .pipe(ws);
+    res("done");
+  });
 }
 
 async function main() {
-	console.log("Booting program");
-	init();
-	console.log("Reading data from file ExecutionTestCases.csv");
-	console.log("Waiting ...");
-	await readFileCsv();
-	console.log("Reading data successfully !!!");
-	console.log("We have " + data.length.toString() + " testcases");
-	await processing();
-	console.log("Processing testcases successfully !!!");
-	console.log("Writing data result in file result.csv");
-	console.log("Waiting ...");
-	await writeFileCsv();
-	console.log("Write data result successfully !!!");
+  console.log("Booting program");
+  console.log("Reading data from file ExecutionTestCases.csv");
+  console.log("Waiting ...");
+  await readFileCsv();
+  console.log("Reading data successfully !!!");
+  console.log("We have " + data.length.toString() + " testcases");
+  await processing();
+  console.log("Processing testcases successfully !!!");
+  console.log("Writing data result in file result.csv");
+  console.log("Waiting ...");
+  await writeFileCsv();
+  console.log("Write data result successfully !!!");
 }
 
 main();

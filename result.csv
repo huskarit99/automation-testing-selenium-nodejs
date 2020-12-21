@@ -1,0 +1,13 @@
+result_from_calculator,expected_result,error,result_test
+nan,,Number 1 is not a number,FAIL
+nan,,Number 1 is not a number,FAIL
+0,0,,PASS
+0,0,,PASS
+15129,15129,,PASS
+15129,15129,,PASS
+1,1,,PASS
+1,1,,PASS
+123123,123123,,PASS
+123123,123123,,PASS
+1234512345,1234512345,,PASS
+1234512345,1234512345,,PASS
