@@ -1,18 +1,30 @@
+const fs = require('fs');
+const fastcsv = require('fast-csv');
 const webdrive = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
+const firefox = require('selenium-webdriver/firefox');
+
+
 var driver;
 const data = [];
 const builds = [];
+var data_result = [];
 const operations = [];
-const firefox = require('selenium-webdriver/firefox');
+
 
 function chooseBrowser(browser) {
 	const nomalizeBrowser = browser.toLowerCase();
+	var options;
 	switch (nomalizeBrowser) {
 		case 'chrome':
-			driver = new webdrive.Builder().forBrowser('chrome').build();
+			options = new chrome.Options().headless();
+			driver = new webdrive.Builder()
+				.forBrowser('chrome')
+				.setChromeOptions(options)
+				.build();
 			break;
 		case 'firefox':
-			var options = new firefox.Options();
+			options = new firefox.Options();
 			options.addArguments("-headless");
 
 			driver = new webdrive.Builder()
@@ -101,8 +113,10 @@ async function fieldAnswer(expectedValue) {
 	const nomalizeExpectedValue = expectedValue.toString().toLowerCase();
 	const result = await driver.findElement(webdrive.By.id('numberAnswerField')).getAttribute("value");
 	const nomalizeResult = result.toString().toLowerCase();
-	console.log(nomalizeResult);
-
+	data_result.push({
+		'result_from_calculator': nomalizeResult,
+		'expected_result': nomalizeExpectedValue
+	});
 }
 
 function checkboxIntegersOnly(integersOnly) {
@@ -170,9 +184,8 @@ function preprocessing(row) {
 function processing() {
 	data.map((row) => {
 		const { id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue } = preprocessing(row);
-		if (id == 6) {
-			process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue);
-		}
+		console.log("Processing testcase " + id.toString() + ": " + id.toString() + "/" + data.length.toString());
+		process(id, build, firstNumber, secondNumber, operation, integersOnly, browser, expectedValue);
 	});
 }
 
@@ -222,10 +235,29 @@ function init() {
 	builds.push("#selectBuild > option:nth-child(10)");
 }
 
+function writeFileCsv() {
+	const ws = fs.createWriteStream("result.csv");
+	return new Promise((res, rej) => {
+		fastcsv
+			.write(data_result, { headers: true })
+			.pipe(ws);
+	});
+}
+
 async function main() {
+	console.log("Booting program");
 	init();
+	console.log("Reading data from file ExecutionTestCases.csv");
+	console.log("Waiting ...");
 	await readFileCsv();
+	console.log("Reading data successfully !!!");
+	console.log("We have " + data.length.toString() + " testcases");
 	processing();
+	console.log("Processing testcases successfully !!!");
+	console.log("Writing data result in file result.csv");
+	console.log("Waiting ...");
+	await writeFileCsv();
+	console.log("Write data result successfully !!!");
 }
 
 main();
